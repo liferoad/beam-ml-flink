@@ -112,7 +112,7 @@ run-flink: ## Run a local test with FlinkRunner and LOOPBACK
 	./venv/bin/python3 scripts/compare_results.py beam-output/beam_test_out_flink.txt data/beam_test_out.txt
 
 run-portable-flink: ## Run a local test with PortableRunner and LOOPBACK
-	@rm -f beam-output/beam_test_out_portable_portable.txt
+	@rm -f beam-output/beam_test_out_portable_flink.txt
 	-docker stop flink_job_service
 	docker run --net=host --rm -d -v $(PWD)/data:/flink-conf --name flink_job_service apache/beam_flink$(FLINK_VERSION)_job_server:latest --flink-conf-dir /flink-conf
 	time ./venv/bin/python3 -m my_project.run \
@@ -125,3 +125,22 @@ run-portable-flink: ## Run a local test with PortableRunner and LOOPBACK
 	--model_name $(MODEL_NAME)
 	./venv/bin/python3 scripts/compare_results.py beam-output/beam_test_out_portable_flink.txt data/beam_test_out.txt
 	docker stop flink_job_service
+
+run-portable-flink-local: ## Run a local test with PortableRunner, LOOPBACK, and a local Flink cluster
+	@rm -f beam-output/beam_test_out_portable_flink_local.txt
+	@cp -f data/flink-conf-local.yaml $(FLINK_LOCATION)/conf/flink-conf.yaml
+	-$(FLINK_LOCATION)/bin/stop-cluster.sh
+	$(FLINK_LOCATION)/bin/start-cluster.sh
+	-docker stop flink_job_service
+	docker run --net=host --rm -d --name flink_job_service apache/beam_flink$(FLINK_VERSION)_job_server:latest --flink-master=localhost:8081
+	time ./venv/bin/python3 -m my_project.run \
+	--runner PortableRunner \
+	--job_endpoint localhost:8099 \
+	--environment_type LOOPBACK \
+	--input data/openimage_10.txt \
+	--output beam-output/beam_test_out_portable_flink_local.txt \
+	--model_state_dict_path $(MODEL_STATE_DICT_PATH) \
+	--model_name $(MODEL_NAME)
+	./venv/bin/python3 scripts/compare_results.py beam-output/beam_test_out_portable_flink_local.txt data/beam_test_out.txt
+	docker stop flink_job_service
+	$(FLINK_LOCATION)/bin/stop-cluster.sh
