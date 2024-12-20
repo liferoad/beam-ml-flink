@@ -109,3 +109,15 @@ run-flink: ## Run a local test with FlinkRunner and LOOPBACK
 	--model_state_dict_path $(MODEL_STATE_DICT_PATH) \
 	--model_name $(MODEL_NAME)
 	./venv/bin/python3 scripts/compare_results.py beam-output/beam_test_out_flink.txt data/beam_test_out.txt
+
+run-portable-flink: ## Run a local test with PortableRunner and LOOPBACK
+	@rm -f beam-output/beam_test_out_portable_portable.txt
+	time ./venv/bin/python3 -m my_project.run \
+	--runner PortableRunner \
+	--job_endpoint localhost:8099 \
+	--environment_type LOOPBACK \
+	--input gs://xqhu-ml/test-flink/openimage_10.txt \
+	--output gs://xqhu-ml/test-flink/beam_test_out_flink.txt \
+	--model_state_dict_path $(MODEL_STATE_DICT_PATH) \
+	--model_name $(MODEL_NAME)
+	./venv/bin/python3 scripts/compare_results.py beam-output/beam_test_out_portable_flink.txt data/beam_test_out.txt
