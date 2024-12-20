@@ -124,3 +124,4 @@ run-portable-flink: ## Run a local test with PortableRunner and LOOPBACK
 	--model_state_dict_path $(MODEL_STATE_DICT_PATH) \
 	--model_name $(MODEL_NAME)
 	./venv/bin/python3 scripts/compare_results.py beam-output/beam_test_out_portable_flink.txt data/beam_test_out.txt
+	docker stop flink_job_service
