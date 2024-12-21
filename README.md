@@ -73,6 +73,30 @@ For the local Flink cluster setup:
 
 Check `.env` file to customize environment settings.
 
+## Servic Graph
+
+```mermaid
+graph LR
+      A[SDK] --> B(Job Service);
+      B --> C{Execution Engine};
+        C --> D[Worker Pool];
+        E[Java Expansion Service] --> F(Java SDK Harness);
+       D --> F
+        F --> C
+      C --> C
+      style D fill:#ccf,stroke:#333,stroke-width:2px
+      style F fill:#ccf,stroke:#333,stroke-width:2px
+```
+
+Explanation of the Graph:
+
+- The user writes a pipeline using a Beam SDK, which is submitted to the Job Service.
+- The Job Service sends the pipeline to the execution engine (like Dataflow or Flink).
+- If the pipeline includes cross-language transforms, then a Java Expansion Service will spin up a Java SDK harness for the transforms written in Java.
+- The execution engine creates and manages the worker pool.
+- The SDK harness is hosted by the worker pool and executes the transforms of the pipeline.
+- The execution engine and worker pool communicate during the job execution.
+
 ## Additional Resources
 
 * [Beam Flink Runner Documentation](https://beam.apache.org/documentation/runners/flink/)
