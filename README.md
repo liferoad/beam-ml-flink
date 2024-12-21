@@ -1,83 +1,80 @@
 # beam-ml-flink
 
-A simple test Beam ML pipeline using FlinkRunner.
-
+A Beam ML pipeline example using Apache Beam with Flink Runner for image classification tasks. This project adapts code from the [Google Dataflow ML Starter](https://github.com/google/dataflow-ml-starter) repository.
 
 ## Prerequisites
 
 * Python 3
-* Linux (flink-related tests with PortableRunner do not work on Mac or Windows)
+* Linux OS (Flink portable runner tests are not compatible with macOS or Windows)
+* Docker (required for Portable Runner with Flink)
 
-Check `.env` to change based on your need.
-
-## Init and Test
+## Quick Start
 
 ```bash
-make init  # Install dependencies.
-make test  # Run unit tests.
+# Install dependencies
+make init
+
+# Run unit tests
+make test
 ```
 
-## Running the Pipeline Locally
+## Pipeline Execution Options
 
-You can execute the pipeline using different runners locally:
+### Local Runners
 
-* Direct Runner
-
+1. **Direct Runner** (simplest option)
 ```bash
 make run-direct
 ```
 
-* Prism Runner
-
+2. **Prism Runner**
 ```bash
 make run-prism
 ```
 
-* Flink Runner with LOOPBACK
-
-Note `data/flink-conf.yaml` is used here to optimize the flink configurations.
-
+3. **Flink Runner with LOOPBACK**
 ```bash
 make run-flink
 ```
+> Note: Uses optimized Flink configurations from `data/flink-conf.yaml`
 
-* Portable Runner with Flink and LOOPBACK
+### Portable Runners (Linux Only)
 
-Note this only works with Linux and docker is required to run a Flink job service locally.
-
+4. **Portable Runner with Flink**
 ```bash
 make run-portable-flink
 ```
 
-* Portable Runner with a local Flink cluster and LOOPBACK
-
-Note this only works with Linux and docker is required to run a Flink job service locally.
-Note this also requires downloading the desired version from Flink: https://flink.apache.org/downloads/
+5. **Portable Runner with Local Flink Cluster**
 
 ```bash
 make run-portable-flink-local
 ```
+> Note: Uses optimized Flink configurations from `data/flink-conf.yaml`
 
-This happens when calling the above make command:
-```bash
-export FLINK_LOCATION=<your-flink-package-path>
+For the local Flink cluster setup:
+1. Download Apache Flink from the [official website](https://flink.apache.org/downloads/)
+2. Set `FLINK_LOCATION` to your Flink installation path
+3. The above command will:
+   - Copy optimized configurations from `data/flink-conf-local.yaml`
+   - Start a Flink cluster (logs available in `$FLINK_LOCATION/log`)
+   - Execute the Beam job
+   - Stop the cluster automatically
 
-# use this flink-conf.yaml to start the cluster
-cp -f data/flink-conf-local.yaml $FLINK_LOCATION/conf
+## Service Ports
 
-# start a Flink cluster
-# the job logs are at $FLINK_LOCATION/log
-$FLINK_LOCATION/bin/start-cluster.sh
+| Service | Port |
+|---------|------|
+| Artifact Staging Service | 8098 |
+| Java Expansion Service | 8097 |
+| Job Service | 8099 |
 
-# run the Beam job
-# ...
+## Configuration
 
-# stop it
-$FLINK_LOCATION/bin/stop-cluster.sh
-```
+Check `.env` file to customize environment settings.
 
-## Links
+## Additional Resources
 
-* https://github.com/jaehyeon-kim/beam-demos/tree/master/beam-pipelines
-* https://beam.apache.org/documentation/runners/flink/
-* https://beam.apache.org/documentation/runtime/sdk-harness-config/
+* [Beam Flink Runner Documentation](https://beam.apache.org/documentation/runners/flink/)
+* [Beam SDK Harness Configuration](https://beam.apache.org/documentation/runtime/sdk-harness-config/)
+* [Another Beam Flink Repo](https://github.com/jaehyeon-kim/beam-demos/tree/master/beam-pipelines)
