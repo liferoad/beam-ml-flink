@@ -38,7 +38,7 @@ make run-flink
 ```
 > Note: Uses optimized Flink configurations from `data/flink-conf.yaml`
 
-### Portable Runners (Linux Only)
+### Local Portable Runners (Linux Only)
 
 4. **Portable Runner with Flink**
 ```bash
@@ -50,7 +50,7 @@ make run-portable-flink
 ```bash
 make run-portable-flink-local
 ```
-> Note: Uses optimized Flink configurations from `data/flink-conf.yaml`
+> Note: Uses optimized Flink configurations from `data/flink-conf-local.yaml`
 
 For the local Flink cluster setup:
 1. Download Apache Flink from the [official website](https://flink.apache.org/downloads/)
