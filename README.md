@@ -76,11 +76,11 @@ Check `.env` file to customize environment settings.
 ## Servic Graph
 
 ```mermaid
-graph LR
+graph TD
       A[SDK] --> B(Job Service);
       B --> C{Execution Engine};
         C --> D[Worker Pool];
-        E[Java Expansion Service] --> F(Java SDK Harness);
+        E[Java Expansion Service] --> F(SDK Harness);
        D --> F
         F --> C
       style D fill:#ccf,stroke:#333,stroke-width:2px
