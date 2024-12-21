@@ -73,7 +73,7 @@ For the local Flink cluster setup:
 
 Check `.env` file to customize environment settings.
 
-## Servic Graph
+## Service Graph
 
 ```mermaid
 graph TD
