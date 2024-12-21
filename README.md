@@ -83,7 +83,6 @@ graph LR
         E[Java Expansion Service] --> F(Java SDK Harness);
        D --> F
         F --> C
-      C --> C
       style D fill:#ccf,stroke:#333,stroke-width:2px
       style F fill:#ccf,stroke:#333,stroke-width:2px
 ```
