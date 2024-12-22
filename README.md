@@ -53,9 +53,9 @@ make run-portable-flink-local
 > Note: Uses optimized Flink configurations from `data/flink-conf-local.yaml`
 
 For the local Flink cluster setup:
-1. Download Apache Flink from the [official website](https://flink.apache.org/downloads/)
-2. Set `FLINK_LOCATION` to your Flink installation path
-3. The above command will:
+* Download Apache Flink from the [official website](https://flink.apache.org/downloads/)
+* Set `FLINK_LOCATION` to your Flink installation path
+* The above command will:
    - Copy optimized configurations from `data/flink-conf-local.yaml`
    - Start a Flink cluster (logs available in `$FLINK_LOCATION/log`)
    - Execute the Beam job
@@ -90,22 +90,22 @@ This guide explains how to set up and use a Dataproc Flink cluster on Google Clo
 
 #### Steps
 
-1. Push the previous Docker image (created by `make docker-cpu`) to Artifact Registry (AR):
+* Push the previous Docker image (created by `make docker-cpu`) to Artifact Registry (AR):
 ```bash
 make push-docker-cpu
 ```
 
-2. Create a Flink cluster on Dataproc:
+* Create a Flink cluster on Dataproc:
 ```bash
 make create-flink-cluster
 ```
 
-3. Execute a Beam ML job on the cluster:
+* Execute a Beam ML job on the cluster:
 ```bash
 make run-portable-flink-cluster
 ```
 
-4. Clean up by removing the cluster:
+* Clean up by removing the cluster:
 ```bash
 make remove-flink-cluster
 ```
