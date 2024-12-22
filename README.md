@@ -63,21 +63,29 @@ For the local Flink cluster setup:
 
 6. **Portable Runner with Local Flink Cluster and DOCKER**
 
-Using `DOCKER` or `EXTERNAL` runners introduces complexities in managing Python package dependencies across different environments compared to `LOOPBACK`. To mitigate this overhead, one approach involves building a local Python worker SDK Docker image containing the necessary packages:
+Using `EXTERNAL` introduces complexities in managing Python package dependencies across different environments compared to `LOOPBACK`. To mitigate this overhead, `DOCKER` is used here to build a local Python worker SDK Docker image containing the necessary packages:
 ```bash
 make docker-cpu
 ```
-This command builds a Pytorch CPU image, suitable for testing purposes.
+This command builds a Pytorch CPU image with Beam, suitable for testing purposes.
 
 Subsequently, a local Flink cluster can be launched to utilize this Python SDK image for model inference:
 ```bash
 make run-portable-flink-worker-local
 ```
-Note that
+Note that:
 * Shared Artifact Staging: The directory `/tmp/beam-artifact-staging` must be accessible to both the job server and the Flink cluster for sharing staging artifacts.
 * Limitations: The pipeline operating within the Dockerized worker cannot directly access local image lists or write prediction results to the local filesystem. Consequently, testing is limited to scenarios like processing a single image file and printing the output within the worker environment.
 
 However, this method is generally discouraged. For testing Beam pipelines, it is recommended to use `LOOPBACK` or local runners. For production deployments, utilize appropriate runners such as DataflowRunner or FlinkRunner with a managed Flink cluster (e.g., on Dataproc).
+
+### Remote Dataproc Flink Cluster
+
+TODO. CPU & GPU.
+
+### Remote Managed Flink Cluster
+
+TODO. CPU & GPU.
 
 ## Service Ports
 
