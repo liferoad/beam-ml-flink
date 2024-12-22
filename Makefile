@@ -168,3 +168,26 @@ run-portable-flink-worker-local: ## Run a local test with PortableRunner, DOCKER
 	--model_name $(MODEL_NAME)
 	docker stop flink_job_service
 	$(FLINK_LOCATION)/bin/stop-cluster.sh
+
+push-docker-cpu: ## Push a custom docker image with Pytorch CPU to AR
+	docker tag $(LOCAL_CONTAINER_IMAGE) $(HARNESS_IMAGES_TO_PULL)
+	docker push $(HARNESS_IMAGES_TO_PULL)
+
+create-flink-cluster: ## Create a flink cluster using Dataproc
+	cd scripts; ./dataproc_flink_cluster.sh create; cd ..
+
+remove-flink-cluster: ## Remove a flink cluster using Dataproc
+	cd scripts; ./dataproc_flink_cluster.sh delete; cd ..
+
+run-portable-flink-cluster: ## Run a local test with PortableRunner and a Dataproc Flink cluster
+	time ./venv/bin/python3 -m my_project.run \
+	--runner PortableRunner \
+	--job_endpoint localhost:8099 \
+	--environment_type DOCKER \
+	--environment_config $(HARNESS_IMAGES_TO_PULL) \
+	--experiments disable_logging_submission_environment \
+	--setup_file ./setup.py \
+	--input gs://xqhu-ml/test-flink/openimage_10.txt \
+	--output gs://xqhu-ml/test-flink/openimage_10.txt/output \
+	--model_state_dict_path $(MODEL_STATE_DICT_PATH) \
+	--model_name $(MODEL_NAME)

@@ -81,11 +81,35 @@ However, this method is generally discouraged. For testing Beam pipelines, it is
 
 ### Remote Dataproc Flink Cluster
 
-TODO. CPU & GPU.
+Note adjust the section `GCP DATAPROC SETTINGS` in .env based on your information. Suggested running this in a Linux machine.
+
+Push the loca image to AR:
+```bash
+make push-docker-cpu
+```
+
+Create a Flink cluster:
+```bash
+make create-flink-cluster
+```
+
+Run a Beam ML job using this cluster:
+```bash
+make run-portable-flink-cluster
+```
+
+Remove the created cluster:
+```bash
+make remove-flink-cluster
+```
 
 ### Remote Managed Flink Cluster
 
-TODO. CPU & GPU.
+TODO.
+
+### TODO
+* Streaming
+* GPU
 
 ## Service Ports
 
@@ -128,3 +152,4 @@ Explanation of the Graph:
 * [Beam Flink Runner Documentation](https://beam.apache.org/documentation/runners/flink/)
 * [Beam SDK Harness Configuration](https://beam.apache.org/documentation/runtime/sdk-harness-config/)
 * [Another Beam Flink Repo](https://github.com/jaehyeon-kim/beam-demos/tree/master/beam-pipelines)
+* [Dataproc](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts)

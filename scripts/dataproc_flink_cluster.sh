@@ -52,10 +52,10 @@ GCLOUD_REGION=`echo $GCLOUD_ZONE | sed -E "s/(-[a-z])?$//"`
 MASTER_NAME="$CLUSTER_NAME-m"
 
 # GCS properties
-INIT_ACTIONS_FOLDER_NAME="init-actions"
-FLINK_INIT="$GCS_BUCKET/$INIT_ACTIONS_FOLDER_NAME/flink.sh"
-BEAM_INIT="$GCS_BUCKET/$INIT_ACTIONS_FOLDER_NAME/beam.sh"
-DOCKER_INIT="$GCS_BUCKET/$INIT_ACTIONS_FOLDER_NAME/docker.sh"
+# INIT_ACTIONS_FOLDER_NAME="init-actions"
+# FLINK_INIT="$GCS_BUCKET/$INIT_ACTIONS_FOLDER_NAME/flink.sh"
+# BEAM_INIT="$GCS_BUCKET/$INIT_ACTIONS_FOLDER_NAME/beam.sh"
+# DOCKER_INIT="$GCS_BUCKET/$INIT_ACTIONS_FOLDER_NAME/docker.sh"
 
 # Flink properties
 FLINK_LOCAL_PORT=8081
@@ -81,7 +81,7 @@ function get_leader() {
     application_ids[$i]=`echo $line | sed "s/ .*//"`
     application_masters[$i]=`echo $line | sed -E "s#.*(https?://)##" | sed "s/ .*//"`
     i=$((i+1))
-  done <<< $(gcloud compute ssh --zone=$GCLOUD_ZONE --quiet yarn@$MASTER_NAME --command="yarn application -list" | grep "Apache Flink")
+  done <<< $(gcloud compute ssh --project=$PROJECT_ID --zone=$GCLOUD_ZONE --quiet yarn@$MASTER_NAME --command="yarn application -list" | grep "Apache Flink")
 
   if [ $i != 1 ]; then
     echo "Multiple applications found. Make sure that only 1 application is running on the cluster."
@@ -90,7 +90,7 @@ function get_leader() {
       echo $app
     done
 
-    echo "Execute 'gcloud compute ssh --zone=$GCLOUD_ZONE yarn@$MASTER_NAME --command=\"yarn application -kill <APP_NAME>\"' to kill the yarn application."
+    echo "Execute 'gcloud compute ssh --project=$PROJECT_ID --zone=$GCLOUD_ZONE yarn@$MASTER_NAME --command=\"yarn application -kill <APP_NAME>\"' to kill the yarn application."
     exit 1
   fi
 
@@ -99,11 +99,11 @@ function get_leader() {
 }
 
 function start_job_server() {
-  gcloud compute ssh --zone=$GCLOUD_ZONE --quiet yarn@${MASTER_NAME} --command="sudo --user yarn docker run --detach --publish 8099:8099 --publish 8098:8098 --publish 8097:8097 --volume ~/.config/gcloud:/root/.config/gcloud ${JOB_SERVER_IMAGE} --flink-master=${YARN_APPLICATION_MASTER} --artifacts-dir=${ARTIFACTS_DIR}"
+  gcloud compute ssh --project=$PROJECT_ID --zone=$GCLOUD_ZONE --quiet yarn@${MASTER_NAME} --command="sudo --user yarn docker run --detach --publish 8099:8099 --publish 8098:8098 --publish 8097:8097 --volume ~/.config/gcloud:/root/.config/gcloud ${JOB_SERVER_IMAGE} --flink-master=${YARN_APPLICATION_MASTER} --artifacts-dir=${ARTIFACTS_DIR}"
 }
 
 function start_tunnel() {
-  local job_server_config=`gcloud compute ssh --quiet --zone=$GCLOUD_ZONE yarn@$MASTER_NAME --command="curl -s \"http://$YARN_APPLICATION_MASTER/jobmanager/config\""`
+  local job_server_config=`gcloud compute ssh --quiet --project=$PROJECT_ID --zone=$GCLOUD_ZONE yarn@$MASTER_NAME --command="curl -s \"http://$YARN_APPLICATION_MASTER/jobmanager/config\""`
   local key="jobmanager.rpc.port"
   local yarn_application_master_host=`echo $YARN_APPLICATION_MASTER | cut -d ":" -f1`
   local jobmanager_rpc_port=`echo $job_server_config | python -c "import sys, json; print([e['value'] for e in json.load(sys.stdin) if e['key'] == u'$key'][0])"`
@@ -112,9 +112,43 @@ function start_tunnel() {
 
   local job_server_ports_forwarding=$([[ -n "${JOB_SERVER_IMAGE:=}" ]] && echo "-L 8099:localhost:8099 -L 8098:localhost:8098 -L 8097:localhost:8097" || echo "")
 
-  local tunnel_command="gcloud compute ssh --zone=$GCLOUD_ZONE --quiet yarn@${MASTER_NAME} -- -L ${FLINK_LOCAL_PORT}:${YARN_APPLICATION_MASTER} -L ${jobmanager_rpc_port}:${yarn_application_master_host}:${jobmanager_rpc_port} ${job_server_ports_forwarding} -D 1080 ${detached_mode_params}"
+  local tunnel_command="gcloud compute ssh --project=$PROJECT_ID --zone=$GCLOUD_ZONE --quiet yarn@${MASTER_NAME} -- -L ${FLINK_LOCAL_PORT}:${YARN_APPLICATION_MASTER} -L ${jobmanager_rpc_port}:${yarn_application_master_host}:${jobmanager_rpc_port} ${job_server_ports_forwarding} -D 1080 ${detached_mode_params}"
 
   eval $tunnel_command
+}
+
+function run_on_dataproc_nodes() {
+  # Get the cluster name from the first argument
+  CLUSTER_NAME="$1"
+
+  # Get the command to run from the second argument
+  COMMAND="$2"
+
+  # Check if both arguments are provided
+  if [ -z "$CLUSTER_NAME" ] || [ -z "$COMMAND" ]; then
+    echo "Usage: run_on_dataproc_nodes <cluster-name> <command>"
+    return 1
+  fi
+
+  # Get the master node name
+  master_node=$(gcloud dataproc clusters describe $CLUSTER_NAME \
+    --project $PROJECT_ID --region=$GCLOUD_REGION \
+    --format="value(config.masterConfig.instanceNames)")
+
+  # Get the list of worker nodes using gcloud command
+  worker_nodes=$(gcloud dataproc clusters describe $CLUSTER_NAME \
+    --project $PROJECT_ID --region=$GCLOUD_REGION \
+    --format="value(config.workerConfig.instanceNames)" | sed 's/;/\n/g')
+
+  # Combine master node and worker nodes
+  all_nodes="$master_node
+   $worker_nodes"
+
+  # Loop through all nodes and run the command
+  for node in $all_nodes; do
+    echo "Running command on node: $node"
+    gcloud compute ssh $node --command "$COMMAND" --project $PROJECT_ID --zone=$GCLOUD_ZONE --quiet
+  done
 }
 
 function create_cluster() {
@@ -137,7 +171,7 @@ function create_cluster() {
       master_machine_type="${HIGH_MEM_MACHINE}"
 
     gcloud dataproc clusters create $CLUSTER_NAME --enable-component-gateway --region=$GCLOUD_REGION --num-workers=$FLINK_NUM_WORKERS --public-ip-address \
-    --master-machine-type=${master_machine_type} --worker-machine-type=${worker_machine_type} --metadata "${metadata}", \
+    --project=$PROJECT_ID --master-machine-type=${master_machine_type} --worker-machine-type=${worker_machine_type} --metadata "${metadata}", \
     --image-version=$image_version --zone=$GCLOUD_ZONE --optional-components=FLINK,DOCKER  \
     --properties="${HIGH_MEM_FLINK_PROPS}"
   else
@@ -146,15 +180,19 @@ function create_cluster() {
     # TODO(11/22/2024) remove --worker-machine-type and --master-machine-type once N2 CPUs quota relaxed
     # Dataproc 2.1 uses n2-standard-2 by default but there is N2 CPUs=24 quota limit for this project
     gcloud dataproc clusters create $CLUSTER_NAME --enable-component-gateway --region=$GCLOUD_REGION --num-workers=$FLINK_NUM_WORKERS --public-ip-address \
-    --master-machine-type=${master_machine_type} --worker-machine-type=${worker_machine_type} --metadata "${metadata}", \
+    --project=$PROJECT_ID --master-machine-type=${master_machine_type} --worker-machine-type=${worker_machine_type} --metadata "${metadata}", \
     --image-version=$image_version --zone=$GCLOUD_ZONE --optional-components=FLINK,DOCKER  --quiet
   fi
+
+  run_on_dataproc_nodes $CLUSTER_NAME "gcloud auth configure-docker us-docker.pkg.dev --quiet"
+  # download all SDK images on master and workers
+  run_on_dataproc_nodes $CLUSTER_NAME "docker pull ${HARNESS_IMAGES_TO_PULL}"
 }
 
 # Runs init actions for Docker, Portability framework (Beam) and Flink cluster
 # and opens an SSH tunnel to connect with Flink easily and run Beam jobs.
 function create() {
-  upload_init_actions
+  # upload_init_actions
   create_cluster
   get_leader
   [[ -n "${JOB_SERVER_IMAGE:=}" ]] && start_job_server
@@ -169,7 +207,7 @@ function restart() {
 
 # Deletes a Flink cluster.
 function delete() {
-  gcloud dataproc clusters delete $CLUSTER_NAME --region=$GCLOUD_REGION --quiet
+  gcloud dataproc clusters delete $CLUSTER_NAME --project=$PROJECT_ID --region=$GCLOUD_REGION --quiet
 }
 
 "$@"
