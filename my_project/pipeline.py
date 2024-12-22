@@ -109,7 +109,15 @@ def build_pipeline(pipeline, source_config: SourceConfig, sink_config: SinkConfi
     else:
         raise ValueError("Only support PytorchModelHandler!")
 
-    if source_config.streaming:
+    if source_config.input is None:
+        # use a one file to test the pipeline
+        test_file = "gs://apache-beam-ml/datasets/openimage_50k_benchmark/1ec63d33df5e91fd.jpg"
+        filename_value_pair = (
+            pipeline
+            | "TestFile" >> beam.Create([test_file])
+            | "ReadImageData" >> beam.Map(lambda image_name: read_image(image_file_name=image_name))
+        )
+    elif source_config.streaming:
         # read the text file path from Pub/Sub and use FixedWindows to group these images
         # and then run the model inference and store the results into GCS
         filename_value_pair = (
@@ -141,7 +149,9 @@ def build_pipeline(pipeline, source_config: SourceConfig, sink_config: SinkConfi
     )
 
     # combine all the window results into one text for GCS
-    if source_config.streaming:
+    if source_config.input is None:
+        predictions | "JustPrint" >> beam.Map(print)
+    elif source_config.streaming:
         (
             predictions
             | "WriteOutputToGCS"

@@ -32,9 +32,9 @@ from my_project.pipeline import build_pipeline
 def parse_known_args(argv):
     """Parses args for the workflow."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", dest="input", required=True, help="Path to the text file containing image names.")
+    parser.add_argument("--input", dest="input", required=False, help="Path to the text file containing image names.")
     parser.add_argument(
-        "--output", dest="output", required=True, help="Path where to save output predictions." " text file."
+        "--output", dest="output", required=False, help="Path where to save output predictions." " text file."
     )
     parser.add_argument(
         "--model_state_dict_path", dest="model_state_dict_path", required=False, help="Path to the model's state_dict."
@@ -57,7 +57,7 @@ def parse_known_args(argv):
     return parser.parse_known_args(argv)
 
 
-def run(argv=None, save_main_session=True, test_pipeline=None) -> PipelineResult:
+def run(argv=None, save_main_session=False, test_pipeline=None) -> PipelineResult:
     """
     Args:
       argv: Command line arguments defined for this example.

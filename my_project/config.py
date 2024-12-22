@@ -53,12 +53,14 @@ class ModelConfig(BaseModel):
 
 
 def _validate_topic_path(topic_path):
+    if not topic_path:
+        return False
     pattern = r"projects/.+/topics/.+"
     return bool(re.match(pattern, topic_path))
 
 
 class SourceConfig(BaseModel):
-    input: str = Field(..., description="the input path to a text file or a Pub/Sub topic")
+    input: str = Field(None, description="the input path to a text file or a Pub/Sub topic")
     images_dir: str = Field(
         None,
         description="Path to the directory where images are stored."
@@ -72,4 +74,4 @@ class SourceConfig(BaseModel):
 
 
 class SinkConfig(BaseModel):
-    output: str = Field(..., description="the output path to save results as a text file")
+    output: str = Field(None, description="the output path to save results as a text file")

@@ -61,6 +61,24 @@ For the local Flink cluster setup:
    - Execute the Beam job
    - Stop the cluster automatically
 
+6. **Portable Runner with Local Flink Cluster and DOCKER**
+
+Using `DOCKER` or `EXTERNAL` runners introduces complexities in managing Python package dependencies across different environments compared to `LOOPBACK`. To mitigate this overhead, one approach involves building a local Python worker SDK Docker image containing the necessary packages:
+```bash
+make docker-cpu
+```
+This command builds a Pytorch CPU image, suitable for testing purposes.
+
+Subsequently, a local Flink cluster can be launched to utilize this Python SDK image for model inference:
+```bash
+make run-portable-flink-worker-local
+```
+Note that
+* Shared Artifact Staging: The directory `/tmp/beam-artifact-staging` must be accessible to both the job server and the Flink cluster for sharing staging artifacts.
+* Limitations: The pipeline operating within the Dockerized worker cannot directly access local image lists or write prediction results to the local filesystem. Consequently, testing is limited to scenarios like processing a single image file and printing the output within the worker environment.
+
+However, this method is generally discouraged. For testing Beam pipelines, it is recommended to use `LOOPBACK` or local runners. For production deployments, utilize appropriate runners such as DataflowRunner or FlinkRunner with a managed Flink cluster (e.g., on Dataproc).
+
 ## Service Ports
 
 | Service | Port |
@@ -68,6 +86,7 @@ For the local Flink cluster setup:
 | Artifact Staging Service | 8098 |
 | Java Expansion Service | 8097 |
 | Job Service | 8099 |
+| Worker Pool Service | 5000 |
 
 ## Configuration
 
