@@ -81,27 +81,36 @@ However, this method is generally discouraged. For testing Beam pipelines, it is
 
 ### Remote Dataproc Flink Cluster
 
-Note adjust the section `GCP DATAPROC SETTINGS` in .env based on your information. Suggested running this in a Linux machine.
+This guide explains how to set up and use a Dataproc Flink cluster on Google Cloud Platform (GCP).
 
-Push the loca image to AR:
+#### Prerequisites
+- A Linux-based environment (recommended)
+- GCP project with required permissions
+- Configured `.env` file with your GCP Dataproc settings
+
+#### Steps
+
+1. Push the previous Docker image (created by `make docker-cpu`) to Artifact Registry (AR):
 ```bash
 make push-docker-cpu
 ```
 
-Create a Flink cluster:
+2. Create a Flink cluster on Dataproc:
 ```bash
 make create-flink-cluster
 ```
 
-Run a Beam ML job using this cluster:
+3. Execute a Beam ML job on the cluster:
 ```bash
 make run-portable-flink-cluster
 ```
 
-Remove the created cluster:
+4. Clean up by removing the cluster:
 ```bash
 make remove-flink-cluster
 ```
+
+**Note:** Before starting, ensure you've properly configured the `GCP DATAPROC SETTINGS` section in your `.env` file with your project-specific information.
 
 ### Remote Managed Flink Cluster
 
